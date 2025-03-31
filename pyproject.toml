@@ -1,0 +1,19 @@
+[build-system]
+requires = ["setuptools", "wheel"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "ipa-gpo-install"
+version = "0.0.1"
+description = "CLI-утилита для настройки GPO в FreeIPA"
+readme = "README.md"
+requires-python = ">=3.8"
+license = {text = "GPL-3.0"}
+dependencies = [
+    "ipalib",
+    "ldap3",
+    "gssapi"
+]
+
+[project.scripts]
+ipa-gpo-install = "freeipa_gpo_install.cli:main"
