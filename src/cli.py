@@ -1,35 +1,60 @@
-import argparse
-import sys
+import os
 import logging
+import sys
+import argparse
+from .checks import initialize_ipa_api, get_ipa_domain
+from .logger import setup_logger
+
+def parse_args():
+    """
+    Parse command line arguments
+
+    Returns:
+        Parsed arguments object
+    """
+    parser = argparse.ArgumentParser(
+        description="Utility for preparing FreeIPA for Group Policy Management"
+    )
+
+    parser.add_argument('--debuglevel', type=int, choices=[0, 1, 2], default=0,
+                        help='Debug level: 0=errors only, 1=warnings, 2=debug')
+    parser.add_argument('--check-only', action='store_true',
+                        help='Only perform checks without making changes')
+
+    return parser.parse_args()
 
 def main():
-    parser = argparse.ArgumentParser(
-        description="CLI-утилита для настройки GPO в FreeIPA"
-    )
+    """
+    Main entry point for the application
 
-    parser.add_argument(
-        "--debuglevel", type=int, choices=range(0, 3), default=0,
-        help="Уровень логирования (0-3)"
-    )
-    parser.add_argument(
-        "--version", action="store_true",
-        help="Вывести версию утилиты"
-    )
+    Returns:
+        Exit code (0 for success, non-zero for failure)
+    """
+    logger = logging.getLogger('ipa-gpo-install')
+    args = parse_args()
+    logger = setup_logger(args.debuglevel)
 
-    args = parser.parse_args()
 
-    if args.version:
-        print("ipa-gpo-install 0.0.1")
-        sys.exit(0)
+    logger.info("Starting ipa-gpo-install")
+    if args.check_only:
+        logger.info("Running in check-only mode")
+        if initialize_ipa_api():
+            logger.info("IPA API connection successful")
 
-    logging.basicConfig(
-        level=logging.DEBUG if args.debuglevel > 0 else logging.INFO,
-        format="%(asctime)s - %(levelname)s - %(message)s"
-    )
+            domain = get_ipa_domain()
+            if domain:
+                logger.info(f"IPA domain: {domain}")
+            else:
+                logger.error("Failed to retrieve IPA domain")
+                return 1
+        else:
+            logger.error("Failed to connect to IPA API")
+            return 1
 
-    logging.info("Запуск ipa-gpo-install")
+        return 0
 
-    logging.info("Здесь будут проверки и настройка")
+    logger.info("Operation completed successfully")
+    return 0
 
-if __name__ == "__main__":
-    main()
+if __name__ == '__main__':
+    sys.exit(main())
