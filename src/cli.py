@@ -106,6 +106,22 @@ def perform_configuration_checks(checker: IPAChecker) -> Dict[str, Any]:
 
     return results
 
+
+def run_task(name: str, task_func: Callable, *args) -> bool:
+    """Run a task with proper logging"""
+    logger.info(f"Running task: {name}")
+    try:
+        result = task_func(*args)
+        if result:
+            logger.info(f"Task succeeded: {name}")
+        else:
+            logger.error(f"Task failed: {name}")
+        return result
+    except Exception as e:
+        logger.error(f"Task failed with error: {name} - {e}")
+        return False
+
+
 def execute_required_actions(actions: IPAActions, check_results: Dict[str, Any]) -> bool:
     """Execute required actions based on check results"""
     tasks = []
