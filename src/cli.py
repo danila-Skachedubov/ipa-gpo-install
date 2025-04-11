@@ -45,7 +45,8 @@ def setup_environment(options: Any) -> bool:
     """Set up environment and initialize API"""
     try:
         if os.geteuid() != 0:
-            raise ScriptError("Must be root to setup Group Policy features on server")
+            logger.error("Must be root to setup Group Policy features on server")
+            return False
 
         verbose, debug = options.debuglevel >= 1, options.debuglevel >= 2
         os.makedirs(os.path.dirname(LOG_FILE_PATH), exist_ok=True)
@@ -54,7 +55,7 @@ def setup_environment(options: Any) -> bool:
         for log_module in ['ipalib', 'ipapython', 'ipaserver', 'ipaplatform']:
             logging.getLogger(log_module).setLevel(logging.CRITICAL)
 
-        logger.info("Initializing IPA API...")
+        logger.info("Initializing IPA API")
         api.bootstrap(in_server=True, debug=False, context='installer', confdir=paths.ETC_IPA)
         api.finalize()
 
@@ -68,3 +69,45 @@ def setup_environment(options: Any) -> bool:
     except Exception as e:
         logger.error(f"Error setting up environment: {e}")
         return False
+
+
+def main():
+    """Main entry point for the application"""
+
+    safe_options, options = parse_options()
+    if not setup_environment(options):
+        return 1
+    try:
+        checker = IPAChecker(logger, api)
+        logger.info("Checking critical requirements...")
+        if not check_critical_requirements(checker):
+            return 1
+
+        logger.info("Performing remaining environment checks...")
+        check_results = perform_remaining_checks(checker)
+ 
+        if options.check_only:
+            logger.info("Check-only mode: all checks completed")
+            return 0
+
+        actions = IPAActions(logger, api)
+        if not execute_required_actions(actions, check_results):
+            return 1
+
+        print("""
+=============================================================================
+Setup complete
+
+The IPA LDAP schema has been extended with Group Policy related object classes.
+You can now proceed with Group Policy configuration.
+=============================================================================
+""")
+        
+        return 0
+    finally:
+        if api.Backend.ldap2.isconnected():
+            api.Backend.ldap2.disconnect()
+
+
+if __name__ == '__main__':
+    run_script(main, log_file_name=LOG_FILE_PATH, operation_name='ipa-gpo-install')
