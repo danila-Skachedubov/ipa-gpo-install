@@ -90,6 +90,22 @@ def check_critical_requirements(checker: IPAChecker) -> bool:
 
     return True
 
+def perform_configuration_checks(checker: IPAChecker) -> Dict[str, Any]:
+    """Perform non-critical checks to determine what actions are needed"""
+    results = {}
+
+    logger.info("Checking LDAP schema for required object classes...")
+    results['schema_classes'] = checker.check_schema_object_classes(REQUIRED_SCHEMA_CLASSES)
+
+    logger.info("Checking if AD Trust is enabled...")
+    results['adtrust_enabled'] = checker.check_adtrust_installed()
+
+    logger.info("Checking SYSVOL directory and share...")
+    results['sysvol_directory'] = checker.check_sysvol_directory()
+    results['sysvol_share'] = checker.check_sysvol_share()
+
+    return results
+
 
 def main():
     """Main entry point for the application"""
@@ -103,8 +119,8 @@ def main():
         if not check_critical_requirements(checker):
             return 1
 
-        logger.info("Performing remaining environment checks")
-        check_results = perform_remaining_checks(checker)
+        logger.info("Performing configuration environment checks")
+        check_results = perform_configuration_checks(checker)
  
         if options.check_only:
             logger.info("Check-only mode: all checks completed")
