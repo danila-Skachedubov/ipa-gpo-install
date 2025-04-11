@@ -70,6 +70,26 @@ def setup_environment(options: Any) -> bool:
         logger.error(f"Error setting up environment: {e}")
         return False
 
+def check_critical_requirements(checker: IPAChecker) -> bool:
+    """Check critical requirements that must be met before proceeding"""
+
+    logger.info("Checking Kerberos ticket")
+    if not checker.check_kerberos_ticket():
+        logger.error("Missing Kerberos ticket. Run 'kinit' to obtain a valid ticket.")
+        return False
+
+    logger.info("Checking admin privileges...")
+    if not checker.check_admin_privileges():
+        logger.error("Administrative privileges required.")
+        return False
+
+    logger.info("Checking IPA services...")
+    if not checker.check_ipa_services():
+        logger.error("Essential IPA services are not running.")
+        return False
+
+    return True
+
 
 def main():
     """Main entry point for the application"""
@@ -79,11 +99,11 @@ def main():
         return 1
     try:
         checker = IPAChecker(logger, api)
-        logger.info("Checking critical requirements...")
+        logger.info("Checking critical requirements")
         if not check_critical_requirements(checker):
             return 1
 
-        logger.info("Performing remaining environment checks...")
+        logger.info("Performing remaining environment checks")
         check_results = perform_remaining_checks(checker)
  
         if options.check_only:
@@ -102,7 +122,7 @@ The IPA LDAP schema has been extended with Group Policy related object classes.
 You can now proceed with Group Policy configuration.
 =============================================================================
 """)
-        
+
         return 0
     finally:
         if api.Backend.ldap2.isconnected():
