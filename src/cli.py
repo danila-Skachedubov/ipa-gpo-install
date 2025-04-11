@@ -38,5 +38,33 @@ def parse_options() -> Tuple[Dict, Any]:
     options, _args = parser.parse_args()
     safe_options = parser.get_safe_opts(options)
     admin_cleanup_global_argv(parser, options, sys.argv)
-    
+
     return safe_options, options
+
+def setup_environment(options: Any) -> bool:
+    """Set up environment and initialize API"""
+    try:
+        if os.geteuid() != 0:
+            raise ScriptError("Must be root to setup Group Policy features on server")
+
+        verbose, debug = options.debuglevel >= 1, options.debuglevel >= 2
+        os.makedirs(os.path.dirname(LOG_FILE_PATH), exist_ok=True)
+        standard_logging_setup(LOG_FILE_PATH, verbose=verbose, debug=debug, filemode='a')
+
+        for log_module in ['ipalib', 'ipapython', 'ipaserver', 'ipaplatform']:
+            logging.getLogger(log_module).setLevel(logging.CRITICAL)
+
+        logger.info("Initializing IPA API...")
+        api.bootstrap(in_server=True, debug=False, context='installer', confdir=paths.ETC_IPA)
+        api.finalize()
+
+        try:
+            api.Backend.ldap2.connect()
+            logger.info("Connected to LDAP server")
+            return True
+        except errors.DatabaseError:
+            raise ScriptError("Cannot connect to the LDAP database. Please check if IPA is running")
+
+    except Exception as e:
+        logger.error(f"Error setting up environment: {e}")
+        return False
