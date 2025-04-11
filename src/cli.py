@@ -95,7 +95,7 @@ def perform_configuration_checks(checker: IPAChecker) -> Dict[str, Any]:
     results = {}
 
     logger.info("Checking LDAP schema for required object classes...")
-    results['schema_classes'] = checker.check_schema_object_classes(REQUIRED_SCHEMA_CLASSES)
+    results['schema_complete'] = checker.check_schema_complete(REQUIRED_SCHEMA_CLASSES)
 
     logger.info("Checking if AD Trust is enabled...")
     results['adtrust_enabled'] = checker.check_adtrust_installed()
@@ -105,6 +105,28 @@ def perform_configuration_checks(checker: IPAChecker) -> Dict[str, Any]:
     results['sysvol_share'] = checker.check_sysvol_share()
 
     return results
+
+def execute_required_actions(actions: IPAActions, check_results: Dict[str, Any]) -> bool:
+    """Execute required actions based on check results"""
+    tasks = []
+    
+    if not check_results['schema_complete']:
+        tasks.append(("Extend LDAP schema", actions.add_ldif_schema, SCHEMA_LDIF_PATH))
+
+    if not check_results['adtrust_enabled']:
+        tasks.append(("Install AD Trust", actions.install_adtrust))
+
+    if not check_results['sysvol_directory']:
+        tasks.append(("Create SYSVOL directory", actions.create_sysvol_directory))
+
+    if not check_results['sysvol_share']:
+        tasks.append(("Create SYSVOL share", actions.create_sysvol_share))
+
+    for task in tasks:
+        if not run_task(*task):
+            return False
+
+    return True
 
 
 def main():
