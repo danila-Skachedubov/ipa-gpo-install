@@ -208,3 +208,33 @@ class IPAChecker:
         except Exception as e:
             self.logger.error(f"Error checking SYSVOL directory: {e}")
             return False
+
+    def check_sysvol_share(self):
+        """
+        Check if SYSVOL share exists
+
+        Returns:
+            True if share exists, False otherwise
+        """
+        try:
+            self.logger.debug("Checking if SYSVOL share exists")
+
+            cmd = ["net", "conf", "list"]
+            result = subprocess.run(cmd, capture_output=True, text=True)
+
+            if result.returncode != 0:
+                self.logger.error(f"Error listing Samba shares: {result.stderr}")
+                return False
+
+            has_share = "sysvol" in result.stdout
+
+            if has_share:
+                self.logger.info("SYSVOL share exists")
+            else:
+                self.logger.warning("SYSVOL share does not exist")
+
+            return has_share
+
+        except Exception as e:
+            self.logger.error(f"Error checking SYSVOL share: {e}")
+            return False
