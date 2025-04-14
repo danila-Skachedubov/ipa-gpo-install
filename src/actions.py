@@ -54,3 +54,31 @@ class IPAActions:
         except Exception as e:
             self.logger.error(f"Error adding LDIF schema: {e}")
             return False
+
+    def install_adtrust(self):
+        """
+        Install and configure AD Trust support
+
+        Returns:
+            True if installation was successful, False otherwise
+        """
+        try:
+            self.logger.info("Installing AD Trust support")
+            if not os.path.exists('/usr/sbin/ipa-adtrust-install'):
+                self.logger.error("ipa-adtrust-install not found")
+                return False
+            cmd = ['/usr/sbin/ipa-adtrust-install', '-U']
+
+            self.logger.debug(f"Running: {' '.join(cmd)}")
+            result = ipautil.run(cmd, raiseonerr=False)
+
+            if result.returncode != 0:
+                self.logger.error(f"Failed to install AD Trust: {result.error_output}")
+                return False
+            self.logger.info("AD Trust installed successfully")
+            return True
+
+        except Exception as e:
+            self.logger.error(f"Error installing AD Trust: {e}")
+            return False
+
