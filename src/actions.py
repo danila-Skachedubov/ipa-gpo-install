@@ -82,3 +82,32 @@ class IPAActions:
             self.logger.error(f"Error installing AD Trust: {e}")
             return False
 
+    def create_sysvol_share(self):
+        """
+        Create SYSVOL Samba share
+
+        Returns:
+            True if creation was successful, False otherwise
+        """
+        try:
+            sysvol_path = f"/var/lib/freeipa/sysvol/{self.api.env.domain}"
+            self.logger.info(f"Creating SYSVOL share for: {sysvol_path}")
+
+            if not os.path.exists(sysvol_path):
+                self.logger.error(f"Cannot create share: directory {sysvol_path} does not exist")
+                return False
+
+            cmd = ["net", "conf", "addshare", "sysvol", sysvol_path, "writeable=y", "guest_ok=N"]
+            self.logger.debug(f"Running: {' '.join(cmd)}")
+            result = subprocess.run(cmd, capture_output=True, text=True)
+
+            if result.returncode != 0:
+                self.logger.error(f"Failed to create SYSVOL share: {result.stderr}")
+                return False
+
+            self.logger.info("SYSVOL share created successfully")
+            return True
+
+        except Exception as e:
+            self.logger.error(f"Error creating SYSVOL share: {e}")
+            return False
