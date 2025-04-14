@@ -73,3 +73,43 @@ class IPAChecker:
         except Exception as e:
             self.logger.error(f"Error checking admin privileges: {e}")
             return False
+
+    def check_ipa_services(self):
+        """
+        Check if all essential IPA services are running
+
+        Returns:
+            True if all essential services are running, otherwise False
+        """
+        try:
+            domain = self.api.env.domain
+            if not domain:
+                self.logger.error("Cannot determine domain name for services check")
+                return False
+            domain_suffix = domain.upper().replace('.', '-')
+
+            services = [
+                f'dirsrv@{domain_suffix}',
+                'krb5kdc',
+                'ipa',
+                'sssd'
+            ]
+            self.logger.debug("Checking IPA services")
+
+            for service in services:
+                cmd = ['systemctl', 'is-active', service]
+                self.logger.debug(f"Running: {' '.join(cmd)}")
+
+                result = ipautil.run(cmd, raiseonerr=False)
+
+                if result.returncode != 0:
+                    self.logger.error(f"Service {service} is not active")
+                    return False
+                self.logger.debug(f"Service {service} is active")
+
+            self.logger.info("All essential services are running")
+            return True
+
+        except Exception as e:
+            self.logger.error(f"Error checking IPA services: {e}")
+            return False
