@@ -175,3 +175,36 @@ class IPAChecker:
         except Exception as e:
             self.logger.error(f"Error checking AD Trust status: {e}")
             return False
+
+    def check_sysvol_directory(self):
+        """
+        Check if SYSVOL directory exists
+
+        Returns:
+            True if directory exists, False otherwise
+        """
+        try:
+            sysvol_path = f"/var/lib/freeipa/sysvol/{self.api.env.domain}"
+            self.logger.debug(f"Checking SYSVOL directory: {sysvol_path}")
+
+            if os.path.exists(sysvol_path) and os.path.isdir(sysvol_path):
+
+                policies_path = os.path.join(sysvol_path, "Policies")
+                scripts_path = os.path.join(sysvol_path, "scripts")
+
+                has_policies = os.path.exists(policies_path) and os.path.isdir(policies_path)
+                has_scripts = os.path.exists(scripts_path) and os.path.isdir(scripts_path)
+
+                if has_policies and has_scripts:
+                    self.logger.info(f"SYSVOL directory exists with required structure")
+                    return True
+                else:
+                    self.logger.warning(f"SYSVOL directory exists but missing subdirectories")
+                    return False
+            else:
+                self.logger.warning(f"SYSVOL directory does not exist: {sysvol_path}")
+                return False
+
+        except Exception as e:
+            self.logger.error(f"Error checking SYSVOL directory: {e}")
+            return False
