@@ -113,3 +113,39 @@ class IPAChecker:
         except Exception as e:
             self.logger.error(f"Error checking IPA services: {e}")
             return False
+
+    def check_schema_complete(self, object_class_names):
+        """
+        Check if all required object classes exist in LDAP schema
+
+        Args:
+            object_class_names: List of object class names to check
+
+        Returns:
+            True if all classes exist, False if any is missing
+        """
+        try:
+            conn = self.api.Backend.ldap2.conn
+
+            self.logger.debug("Retrieving LDAP schema")
+            try:
+                schema_entry = conn.search_s('cn=schema', ldap.SCOPE_BASE,
+                    attrlist=['attributetypes', 'objectclasses'])[0]
+            except ldap.NO_SUCH_OBJECT:
+                self.logger.debug('cn=schema not found, fallback to cn=subschema')
+                schema_entry = conn.search_s('cn=subschema', ldap.SCOPE_BASE,
+                    attrlist=['attributetypes', 'objectclasses'])[0]
+
+            schema = ldap.schema.SubSchema(schema_entry[1])
+
+            for class_name in object_class_names:
+                if schema.get_obj(ldap.schema.ObjectClass, class_name) is None:
+                    self.logger.debug(f"Object class '{class_name}' does not exist in schema")
+                    return False
+
+            self.logger.debug(f"All required object classes exist in schema")
+            return True
+
+        except Exception as e:
+            self.logger.error(f"Error checking schema object classes: {e}")
+            return False
