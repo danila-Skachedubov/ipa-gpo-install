@@ -125,7 +125,7 @@ def run_task(name: str, task_func: Callable, *args) -> bool:
 def execute_required_actions(actions: IPAActions, check_results: Dict[str, Any]) -> bool:
     """Execute required actions based on check results"""
     tasks = []
-    
+
     if not check_results['schema_complete']:
         tasks.append(("Extend LDAP schema", actions.add_ldif_schema, SCHEMA_LDIF_PATH))
 
@@ -161,7 +161,7 @@ def main():
         check_results = perform_configuration_checks(checker)
  
         if options.check_only:
-            logger.info("Check-only mode: all checks completed")
+            print("Check-only mode: all checks completed")
             return 0
 
         actions = IPAActions(logger, api)

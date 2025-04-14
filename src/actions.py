@@ -146,9 +146,9 @@ class IPAActions:
                 self.logger.error(f"Cannot create share: directory {sysvol_path} does not exist")
                 return False
 
-            cmd = ["net", "conf", "addshare", "sysvol", sysvol_path, "writeable=y", "guest_ok=N"]
+            cmd = ["net", "conf", "addshare", "sysvol", sysvol_path, "guest_ok=N"]
             self.logger.debug(f"Running: {' '.join(cmd)}")
-            result = subprocess.run(cmd, capture_output=True, text=True)
+            result = ipautil.run(cmd, raiseonerr=False)
 
             if result.returncode != 0:
                 self.logger.error(f"Failed to create SYSVOL share: {result.stderr}")
