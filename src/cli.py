@@ -78,12 +78,12 @@ def check_critical_requirements(checker: IPAChecker) -> bool:
         logger.error("Missing Kerberos ticket. Run 'kinit' to obtain a valid ticket.")
         return False
 
-    logger.info("Checking admin privileges...")
+    logger.info("Checking admin privileges")
     if not checker.check_admin_privileges():
         logger.error("Administrative privileges required.")
         return False
 
-    logger.info("Checking IPA services...")
+    logger.info("Checking IPA services")
     if not checker.check_ipa_services():
         logger.error("Essential IPA services are not running.")
         return False
@@ -94,13 +94,13 @@ def perform_configuration_checks(checker: IPAChecker) -> Dict[str, Any]:
     """Perform non-critical checks to determine what actions are needed"""
     results = {}
 
-    logger.info("Checking LDAP schema for required object classes...")
+    logger.info("Checking LDAP schema for required object classes")
     results['schema_complete'] = checker.check_schema_complete(REQUIRED_SCHEMA_CLASSES)
 
-    logger.info("Checking if AD Trust is enabled...")
+    logger.info("Checking if AD Trust is enabled")
     results['adtrust_enabled'] = checker.check_adtrust_installed()
 
-    logger.info("Checking SYSVOL directory and share...")
+    logger.info("Checking SYSVOL directory and share")
     results['sysvol_directory'] = checker.check_sysvol_directory()
     results['sysvol_share'] = checker.check_sysvol_share()
 
