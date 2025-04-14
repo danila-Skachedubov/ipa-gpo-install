@@ -149,3 +149,29 @@ class IPAChecker:
         except Exception as e:
             self.logger.error(f"Error checking schema object classes: {e}")
             return False
+
+    def check_adtrust_installed(self):
+        """
+        Check if AD Trust support is enabled in FreeIPA
+
+        Returns:
+            True if AD Trust is enabled, False otherwise
+        """
+        try:
+            self.logger.debug("Checking if AD Trust is enabled")
+
+            if not hasattr(self.api.Command, 'adtrust_is_enabled'):
+                self.logger.error("AD Trust command not available")
+                return False
+            result = self.api.Command.adtrust_is_enabled()
+            enabled = result.get('result', False)
+            if enabled:
+                self.logger.info("AD Trust is enabled")
+            else:
+                self.logger.warning("AD Trust is not enabled")
+
+            return enabled
+
+        except Exception as e:
+            self.logger.error(f"Error checking AD Trust status: {e}")
+            return False
