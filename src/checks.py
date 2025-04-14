@@ -44,3 +44,32 @@ class IPAChecker:
         except Exception as e:
             self.logger.debug(f"Error checking Kerberos ticket: {e}")
             return False
+
+    def check_admin_privileges(self):
+        """
+        Check if current user has admin privileges
+
+        Returns:
+            True if user has admin privileges, otherwise False
+        """
+        try:
+            principal = krb_utils.get_principal()
+            if not principal:
+                self.logger.error("No valid Kerberos principal found")
+                return False
+            username = principal.partition('@')[0].partition('/')[0]
+            user = self.api.Command.user_show(username)['result']
+            group = self.api.Command.group_show('admins')['result']
+
+            has_admin = (user['uid'][0] in group['member_user'] and
+                        group['cn'][0] in user['memberof_group'])
+
+            if has_admin:
+                self.logger.info(f"User {username} has admin privileges")
+            else:
+                self.logger.warning(f"User {username} does not have admin privileges")
+            return has_admin
+
+        except Exception as e:
+            self.logger.error(f"Error checking admin privileges: {e}")
+            return False
