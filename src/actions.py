@@ -1,14 +1,32 @@
 #!/usr/bin/env python3
 
-
 import os
 import logging
 import subprocess
+import gettext
+import locale
 from pathlib import Path
+from os.path import dirname, join, abspath
 
 from ipalib import api
 from ipapython import ipautil
 from ipaplatform.paths import paths
+
+
+LOCALE_DIR = join(dirname(dirname(abspath(__file__))), 'locale')
+try:
+    locale.setlocale(locale.LC_ALL, '')
+    current_locale, encoding = locale.getlocale()
+    if not current_locale:
+        current_locale = 'en_US'
+    translation = gettext.translation('ipa-gpo-install',
+                                     LOCALE_DIR,
+                                     languages=[current_locale.split('_')[0]],
+                                     fallback=True)
+    _ = translation.gettext
+except Exception as e:
+    def _(text):
+        return text
 
 class IPAActions:
     """Class for performing actions in IPA environment"""
@@ -36,24 +54,24 @@ class IPAActions:
         """
         try:
             if not os.path.exists(ldif_file):
-                self.logger.error(f"LDIF file not found: {ldif_file}")
+                self.logger.error(_("LDIF file not found: {}").format(ldif_file))
                 return False
 
-            self.logger.info(f"Adding LDIF schema from file: {ldif_file}")
+            self.logger.info(_("Adding LDIF schema from file: {}").format(ldif_file))
             cmd = ['/usr/sbin/ipa-ldap-updater', '-S', ldif_file]
-            self.logger.debug(f"Running: {' '.join(cmd)}")
+            self.logger.debug(_("Running: {}").format(' '.join(cmd)))
             result = ipautil.run(cmd, raiseonerr=False)
 
             if result.returncode == 0:
-                self.logger.info(f"Successfully added schema from {ldif_file}")
+                self.logger.info(_("Successfully added schema from {}").format(ldif_file))
                 return True
             else:
-                error_msg = result.error_output or "Unknown error"
-                self.logger.error(f"Failed to add schema from {ldif_file}: {error_msg}")
+                error_msg = result.error_output or _("Unknown error")
+                self.logger.error(_("Failed to add schema from {}: {}").format(ldif_file, error_msg))
                 return False
 
         except Exception as e:
-            self.logger.error(f"Error adding LDIF schema: {e}")
+            self.logger.error(_("Error adding LDIF schema: {}").format(e))
             return False
 
     def install_adtrust(self):
@@ -64,23 +82,23 @@ class IPAActions:
             True if installation was successful, False otherwise
         """
         try:
-            self.logger.info("Installing AD Trust support")
+            self.logger.info(_("Installing AD Trust support"))
             if not os.path.exists('/usr/sbin/ipa-adtrust-install'):
-                self.logger.error("ipa-adtrust-install not found")
+                self.logger.error(_("ipa-adtrust-install not found"))
                 return False
             cmd = ['/usr/sbin/ipa-adtrust-install', '-U']
 
-            self.logger.debug(f"Running: {' '.join(cmd)}")
+            self.logger.debug(_("Running: {}").format(' '.join(cmd)))
             result = ipautil.run(cmd, raiseonerr=False)
 
             if result.returncode != 0:
-                self.logger.error(f"Failed to install AD Trust: {result.error_output}")
+                self.logger.error(_("Failed to install AD Trust: {}").format(result.error_output))
                 return False
-            self.logger.info("AD Trust installed successfully")
+            self.logger.info(_("AD Trust installed successfully"))
             return True
 
         except Exception as e:
-            self.logger.error(f"Error installing AD Trust: {e}")
+            self.logger.error(_("Error installing AD Trust: {}").format(e))
             return False
 
     def create_sysvol_directory(self):
@@ -101,14 +119,14 @@ class IPAActions:
                 path.mkdir(parents=True, exist_ok=True)
 
             if not acl_set:
-                self.logger.warning("Using standard permissions for SYSVOL directories")
+                self.logger.warning(_("Using standard permissions for SYSVOL directories"))
                 for path in [sysvol_path, policies_path, scripts_path]:
                     os.chmod(path, 0o755)
-            self.logger.info("SYSVOL directory structure created successfully")
+            self.logger.info(_("SYSVOL directory structure created successfully"))
             return True
 
         except Exception as e:
-            self.logger.error(f"Error creating SYSVOL directory: {e}")
+            self.logger.error(_("Error creating SYSVOL directory: {}").format(e))
             return False
 
 
@@ -120,15 +138,15 @@ class IPAActions:
         if ipautil.run(["which", "setfacl"], raiseonerr=False).returncode != 0:
             return False
 
-        self.logger.info(f"Setting default ACLs on {path}")
+        self.logger.info(_("Setting default ACLs on {}").format(path))
         cmd = ["setfacl", "-d", "-m", "g:admins:rwx,o::r-x", str(path)]
         result = ipautil.run(cmd, raiseonerr=False)
 
         if result.returncode != 0:
-            self.logger.warning(f"Failed to set ACLs on {path}: {result.error_output}")
+            self.logger.warning(_("Failed to set ACLs on {}: {}").format(path, result.error_output))
             return False
 
-        self.logger.info(f"Successfully set default ACLs on {path}")
+        self.logger.info(_("Successfully set default ACLs on {}").format(path))
         return True
 
     def create_sysvol_share(self):
@@ -140,23 +158,23 @@ class IPAActions:
         """
         try:
             sysvol_path = f"/var/lib/freeipa/sysvol/{self.api.env.domain}"
-            self.logger.info(f"Creating SYSVOL share for: {sysvol_path}")
+            self.logger.info(_("Creating SYSVOL share for: {}").format(sysvol_path))
 
             if not os.path.exists(sysvol_path):
-                self.logger.error(f"Cannot create share: directory {sysvol_path} does not exist")
+                self.logger.error(_("Cannot create share: directory {} does not exist").format(sysvol_path))
                 return False
 
-            cmd = ["net", "conf", "addshare", "sysvol", sysvol_path, "guest_ok=N"]
-            self.logger.debug(f"Running: {' '.join(cmd)}")
+            cmd = ["net", "conf", "addshare", "sysvol", sysvol_path, "writeable=y", "guest_ok=N"]
+            self.logger.debug(_("Running: {}").format(' '.join(cmd)))
             result = ipautil.run(cmd, raiseonerr=False)
 
             if result.returncode != 0:
-                self.logger.error(f"Failed to create SYSVOL share: {result.stderr}")
+                self.logger.error(_("Failed to create SYSVOL share: {}").format(result.error_output))
                 return False
 
-            self.logger.info("SYSVOL share created successfully")
+            self.logger.info(_("SYSVOL share created successfully"))
             return True
 
         except Exception as e:
-            self.logger.error(f"Error creating SYSVOL share: {e}")
+            self.logger.error(_("Error creating SYSVOL share: {}").format(e))
             return False
