@@ -4,10 +4,29 @@ import os
 import subprocess
 import logging
 import ldap
+import gettext
+import locale
+from os.path import dirname, join, abspath
 
 from ipalib import api
 from ipalib import krb_utils
 from ipapython import ipautil
+
+LOCALE_DIR = join(dirname(dirname(abspath(__file__))), 'locale')
+
+try:
+    locale.setlocale(locale.LC_ALL, '')
+    current_locale, encoding = locale.getlocale()
+    if not current_locale:
+        current_locale = 'en_US'
+    translation = gettext.translation('ipa-gpo-install',
+                                     LOCALE_DIR,
+                                     languages=[current_locale.split('_')[0]],
+                                     fallback=True)
+    _ = translation.gettext
+except Exception as e:
+    def _(text):
+        return text
 
 class IPAChecker:
     """Class for performing various checks in IPA environment"""
@@ -31,18 +50,18 @@ class IPAChecker:
             True if a ticket exists and is valid, otherwise False
         """
         try:
-            self.logger.debug("Checking for valid Kerberos ticket")
+            self.logger.debug(_("Checking for valid Kerberos ticket"))
             principal = krb_utils.get_principal()
 
             if principal:
-                self.logger.debug(f"Kerberos ticket exists for {principal}")
+                self.logger.debug(_("Kerberos ticket exists for {}").format(principal))
                 return True
             else:
-                self.logger.debug("Valid Kerberos ticket not found")
+                self.logger.debug(_("Valid Kerberos ticket not found"))
                 return False
 
         except Exception as e:
-            self.logger.debug(f"Error checking Kerberos ticket: {e}")
+            self.logger.debug(_("Error checking Kerberos ticket: {}").format(e))
             return False
 
     def check_admin_privileges(self):
@@ -55,7 +74,7 @@ class IPAChecker:
         try:
             principal = krb_utils.get_principal()
             if not principal:
-                self.logger.error("No valid Kerberos principal found")
+                self.logger.error(_("No valid Kerberos principal found"))
                 return False
             username = principal.partition('@')[0].partition('/')[0]
             user = self.api.Command.user_show(username)['result']
@@ -65,13 +84,13 @@ class IPAChecker:
                         group['cn'][0] in user['memberof_group'])
 
             if has_admin:
-                self.logger.info(f"User {username} has admin privileges")
+                self.logger.info(_("User {} has admin privileges").format(username))
             else:
-                self.logger.warning(f"User {username} does not have admin privileges")
+                self.logger.warning(_("User {} does not have admin privileges").format(username))
             return has_admin
 
         except Exception as e:
-            self.logger.error(f"Error checking admin privileges: {e}")
+            self.logger.error(_("Error checking admin privileges: {}").format(e))
             return False
 
     def check_ipa_services(self):
@@ -84,7 +103,7 @@ class IPAChecker:
         try:
             domain = self.api.env.domain
             if not domain:
-                self.logger.error("Cannot determine domain name for services check")
+                self.logger.error(_("Cannot determine domain name for services check"))
                 return False
             domain_suffix = domain.upper().replace('.', '-')
 
@@ -94,24 +113,24 @@ class IPAChecker:
                 'ipa',
                 'sssd'
             ]
-            self.logger.debug("Checking IPA services")
+            self.logger.debug(_("Checking IPA services"))
 
             for service in services:
                 cmd = ['systemctl', 'is-active', service]
-                self.logger.debug(f"Running: {' '.join(cmd)}")
+                self.logger.debug(_("Running: {}").format(' '.join(cmd)))
 
                 result = ipautil.run(cmd, raiseonerr=False)
 
                 if result.returncode != 0:
-                    self.logger.error(f"Service {service} is not active")
+                    self.logger.error(_("Service {} is not active").format(service))
                     return False
-                self.logger.debug(f"Service {service} is active")
+                self.logger.debug(_("Service {} is active").format(service))
 
-            self.logger.info("All essential services are running")
+            self.logger.info(_("All essential services are running"))
             return True
 
         except Exception as e:
-            self.logger.error(f"Error checking IPA services: {e}")
+            self.logger.error(_("Error checking IPA services: {}").format(e))
             return False
 
     def check_schema_complete(self, object_class_names):
@@ -127,12 +146,12 @@ class IPAChecker:
         try:
             conn = self.api.Backend.ldap2.conn
 
-            self.logger.debug("Retrieving LDAP schema")
+            self.logger.debug(_("Retrieving LDAP schema"))
             try:
                 schema_entry = conn.search_s('cn=schema', ldap.SCOPE_BASE,
                     attrlist=['attributetypes', 'objectclasses'])[0]
             except ldap.NO_SUCH_OBJECT:
-                self.logger.debug('cn=schema not found, fallback to cn=subschema')
+                self.logger.debug(_("cn=schema not found, fallback to cn=subschema"))
                 schema_entry = conn.search_s('cn=subschema', ldap.SCOPE_BASE,
                     attrlist=['attributetypes', 'objectclasses'])[0]
 
@@ -140,14 +159,14 @@ class IPAChecker:
 
             for class_name in object_class_names:
                 if schema.get_obj(ldap.schema.ObjectClass, class_name) is None:
-                    self.logger.debug(f"Object class '{class_name}' does not exist in schema")
+                    self.logger.debug(_("Object class '{}' does not exist in schema").format(class_name))
                     return False
 
-            self.logger.debug(f"All required object classes exist in schema")
+            self.logger.debug(_("All required object classes exist in schema"))
             return True
 
         except Exception as e:
-            self.logger.error(f"Error checking schema object classes: {e}")
+            self.logger.error(_("Error checking schema object classes: {}").format(e))
             return False
 
     def check_adtrust_installed(self):
@@ -158,22 +177,22 @@ class IPAChecker:
             True if AD Trust is enabled, False otherwise
         """
         try:
-            self.logger.debug("Checking if AD Trust is enabled")
+            self.logger.debug(_("Checking if AD Trust is enabled"))
 
             if not hasattr(self.api.Command, 'adtrust_is_enabled'):
-                self.logger.error("AD Trust command not available")
+                self.logger.error(_("AD Trust command not available"))
                 return False
             result = self.api.Command.adtrust_is_enabled()
             enabled = result.get('result', False)
             if enabled:
-                self.logger.info("AD Trust is enabled")
+                self.logger.info(_("AD Trust is enabled"))
             else:
-                self.logger.warning("AD Trust is not enabled")
+                self.logger.warning(_("AD Trust is not enabled"))
 
             return enabled
 
         except Exception as e:
-            self.logger.error(f"Error checking AD Trust status: {e}")
+            self.logger.error(_("Error checking AD Trust status: {}").format(e))
             return False
 
     def check_sysvol_directory(self):
@@ -185,7 +204,7 @@ class IPAChecker:
         """
         try:
             sysvol_path = f"/var/lib/freeipa/sysvol/{self.api.env.domain}"
-            self.logger.debug(f"Checking SYSVOL directory: {sysvol_path}")
+            self.logger.debug(_("Checking SYSVOL directory: {}").format(sysvol_path))
 
             if os.path.exists(sysvol_path) and os.path.isdir(sysvol_path):
 
@@ -196,17 +215,17 @@ class IPAChecker:
                 has_scripts = os.path.exists(scripts_path) and os.path.isdir(scripts_path)
 
                 if has_policies and has_scripts:
-                    self.logger.info(f"SYSVOL directory exists with required structure")
+                    self.logger.info(_("SYSVOL directory exists with required structure"))
                     return True
                 else:
-                    self.logger.warning(f"SYSVOL directory exists but missing subdirectories")
+                    self.logger.warning(_("SYSVOL directory exists but missing subdirectories"))
                     return False
             else:
-                self.logger.warning(f"SYSVOL directory does not exist: {sysvol_path}")
+                self.logger.warning(_("SYSVOL directory does not exist: {}").format(sysvol_path))
                 return False
 
         except Exception as e:
-            self.logger.error(f"Error checking SYSVOL directory: {e}")
+            self.logger.error(_("Error checking SYSVOL directory: {}").format(e))
             return False
 
     def check_sysvol_share(self):
@@ -217,24 +236,24 @@ class IPAChecker:
             True if share exists, False otherwise
         """
         try:
-            self.logger.debug("Checking if SYSVOL share exists")
+            self.logger.debug(_("Checking if SYSVOL share exists"))
 
             cmd = ["net", "conf", "list"]
             result = subprocess.run(cmd, capture_output=True, text=True)
 
             if result.returncode != 0:
-                self.logger.error(f"Error listing Samba shares: {result.stderr}")
+                self.logger.error(_("Error listing Samba shares: {}").format(result.stderr))
                 return False
 
             has_share = "sysvol" in result.stdout
 
             if has_share:
-                self.logger.info("SYSVOL share exists")
+                self.logger.info(_("SYSVOL share exists"))
             else:
-                self.logger.warning("SYSVOL share does not exist")
+                self.logger.warning(_("SYSVOL share does not exist"))
 
             return has_share
 
         except Exception as e:
-            self.logger.error(f"Error checking SYSVOL share: {e}")
+            self.logger.error(_("Error checking SYSVOL share: {}").format(e))
             return False
