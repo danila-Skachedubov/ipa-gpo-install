@@ -1,0 +1,371 @@
+# Russian translations for ipa-gpo-install.
+# Copyright (C) 2025 FreeIPA Community
+# This file is distributed under the same license as the ipa-gpo-install package.
+#
+msgid ""
+msgstr ""
+
+"Language: ru\n"
+"MIME-Version: 1.0\n"
+"Content-Type: text/plain; charset=UTF-8\n"
+"Content-Transfer-Encoding: 8bit\n"
+"Project-Id-Version: ipa-gpo-install 0.0.1\n"
+"Last-Translator: Skachedubov Danila <skachedubov@altlinux.org>\n"
+"Language-Team: Russian <gnu@d07.ru>\n"
+"Language: ru\n"
+"MIME-Version: 1.0\n"
+"Plural-Forms: nplurals=3; plural=(n%10==1 && n%100!=11 ? 0 : n%10>=2 && n%10<=4 && (n%100<10 || n%100>=20) ? 1 : 2);\n"
+
+#: cli.py:56
+msgid "Debug level: 0=errors, 1=warnings, 2=debug"
+msgstr "Уровень отладки: 0=ошибки, 1=предупреждения, 2=отладка"
+
+#: cli.py:58
+msgid "Only perform checks without making changes"
+msgstr "Только выполнить проверки без внесения изменений"
+
+#: cli.py:72
+msgid "Must be root to setup Group Policy features on server"
+msgstr "Необходимо быть пользователем root для настройки функций групповой политики на сервере"
+
+#: cli.py:78
+msgid "The log file for this installation can be found in {}"
+msgstr "Файл журнала для этой установки можно найти в {}"
+
+#: cli.py:84
+msgid "Initializing IPA API"
+msgstr "Инициализация API IPA"
+
+#: cli.py:89
+msgid "Connected to LDAP server"
+msgstr "Подключено к серверу LDAP"
+
+#: cli.py:91
+msgid "Outdated Kerberos credentials. Use kdestroy and kinit to update your ticket"
+msgstr "Устаревшие учетные данные Kerberos. Используйте kdestroy и kinit для обновления билета"
+
+#: cli.py:94
+msgid "Cannot connect to the LDAP database. Please check if IPA is running"
+msgstr "Невозможно подключиться к базе данных LDAP. Проверьте, работает ли IPA"
+
+#: cli.py:97
+msgid "Error setting up environment: {}"
+msgstr "Ошибка настройки окружения: {}"
+
+#: cli.py:103
+msgid "Checking Kerberos ticket"
+msgstr "Проверка билета Kerberos"
+
+#: cli.py:105
+msgid "Missing Kerberos ticket. Run 'kinit' to obtain a valid ticket."
+msgstr "Отсутствует билет Kerberos. Выполните 'kinit' для получения действительного билета."
+
+#: cli.py:108
+msgid "Checking admin privileges"
+msgstr "Проверка прав администратора"
+
+#: cli.py:110
+msgid "Administrative privileges required."
+msgstr "Требуются права администратора."
+
+#: cli.py:113
+msgid "Checking IPA services"
+msgstr "Проверка служб IPA"
+
+#: cli.py:115
+msgid "Essential IPA services are not running."
+msgstr "Основные службы IPA не запущены."
+
+#: cli.py:124
+msgid "Checking LDAP schema for required object classes"
+msgstr "Проверка схемы LDAP на наличие необходимых классов объектов"
+
+#: cli.py:127
+msgid "Checking if AD Trust is enabled"
+msgstr "Проверка, включено ли доверие AD"
+
+#: cli.py:130
+msgid "Checking SYSVOL directory and share"
+msgstr "Проверка каталога SYSVOL и общего ресурса"
+
+#: cli.py:139
+msgid "Running task: {}"
+msgstr "Выполнение задачи: {}"
+
+#: cli.py:143
+msgid "Task succeeded: {}"
+msgstr "Задача успешно выполнена: {}"
+
+#: cli.py:145
+msgid "Task failed: {}"
+msgstr "Задача не выполнена: {}"
+
+#: cli.py:148
+msgid "Task failed with error: {} - {}"
+msgstr "Задача не выполнена с ошибкой: {} - {}"
+
+#: cli.py:157
+msgid "Extend LDAP schema"
+msgstr "Расширить схему LDAP"
+
+#: cli.py:160
+msgid "Install AD Trust"
+msgstr "Установить доверие AD"
+
+#: cli.py:163
+msgid "Create SYSVOL directory"
+msgstr "Создать каталог SYSVOL"
+
+#: cli.py:166
+msgid "Create SYSVOL share"
+msgstr "Создать общий ресурс SYSVOL"
+
+#: cli.py:181
+msgid "Checking critical requirements"
+msgstr "Проверка критических требований"
+
+#: cli.py:185
+msgid "Performing configuration environment checks"
+msgstr "Выполнение проверок конфигурации окружения"
+
+#: cli.py:189
+msgid "Check-only mode: all checks completed"
+msgstr "Режим только проверки: все проверки завершены"
+
+#: cli.py:198
+msgid ""
+"\n"
+"=============================================================================\n"
+"Setup complete\n"
+"\n"
+"The IPA LDAP schema has been extended with Group Policy related object classes.\n"
+"You can now proceed with Group Policy configuration.\n"
+"=============================================================================\n"
+msgstr ""
+"\n"
+"=============================================================================\n"
+"Настройка завершена\n"
+"\n"
+"Схема LDAP IPA была расширена классами объектов, связанными с групповой политикой.\n"
+"Теперь вы можете приступить к настройке групповой политики.\n"
+"=============================================================================\n"
+
+#: checks.py:57
+msgid "Checking for valid Kerberos ticket"
+msgstr "Проверка наличия действительного билета Kerberos"
+
+#: checks.py:61
+msgid "Kerberos ticket exists for {}"
+msgstr "Билет Kerberos существует для {}"
+
+#: checks.py:63
+msgid "Valid Kerberos ticket not found"
+msgstr "Действительный билет Kerberos не найден"
+
+#: checks.py:66
+msgid "Error checking Kerberos ticket: {}"
+msgstr "Ошибка проверки билета Kerberos: {}"
+
+#: checks.py:80
+msgid "No valid Kerberos principal found"
+msgstr "Не найден действительный принципал Kerberos"
+
+#: checks.py:91
+msgid "User {} has admin privileges"
+msgstr "Пользователь {} имеет права администратора"
+
+#: checks.py:93
+msgid "User {} does not have admin privileges"
+msgstr "Пользователь {} не имеет прав администратора"
+
+#: checks.py:97
+msgid "Error checking admin privileges: {}"
+msgstr "Ошибка проверки прав администратора: {}"
+
+#: checks.py:110
+msgid "Cannot determine domain name for services check"
+msgstr "Невозможно определить имя домена для проверки служб"
+
+#: checks.py:123
+msgid "Running: {}"
+msgstr "Выполнение: {}"
+
+#: checks.py:128
+msgid "Service {} is not active"
+msgstr "Служба {} не активна"
+
+#: checks.py:130
+msgid "Service {} is active"
+msgstr "Служба {} активна"
+
+#: checks.py:132
+msgid "All essential services are running"
+msgstr "Все основные службы работают"
+
+#: checks.py:136
+msgid "Error checking IPA services: {}"
+msgstr "Ошибка проверки служб IPA: {}"
+
+#: checks.py:150
+msgid "Retrieving LDAP schema"
+msgstr "Получение схемы LDAP"
+
+#: checks.py:154
+msgid "cn=schema not found, fallback to cn=subschema"
+msgstr "cn=schema не найден, использование резервного варианта cn=subschema"
+
+#: checks.py:161
+msgid "Object class '{}' does not exist in schema"
+msgstr "Класс объекта '{}' не существует в схеме"
+
+#: checks.py:164
+msgid "All required object classes exist in schema"
+msgstr "Все необходимые классы объектов существуют в схеме"
+
+#: checks.py:168
+msgid "Error checking schema object classes: {}"
+msgstr "Ошибка проверки классов объектов схемы: {}"
+
+#: checks.py:180
+msgid "AD Trust command not available"
+msgstr "Команда доверия AD недоступна"
+
+#: checks.py:184
+msgid "AD Trust is enabled"
+msgstr "Доверие AD включено"
+
+#: checks.py:186
+msgid "AD Trust is not enabled"
+msgstr "Доверие AD не включено"
+
+#: checks.py:191
+msgid "Error checking AD Trust status: {}"
+msgstr "Ошибка проверки статуса доверия AD: {}"
+
+#: checks.py:202
+msgid "Checking SYSVOL directory: {}"
+msgstr "Проверка каталога SYSVOL: {}"
+
+#: checks.py:212
+msgid "SYSVOL directory exists with required structure"
+msgstr "Каталог SYSVOL существует с требуемой структурой"
+
+#: checks.py:215
+msgid "SYSVOL directory exists but missing subdirectories"
+msgstr "Каталог SYSVOL существует, но отсутствуют подкаталоги"
+
+#: checks.py:218
+msgid "SYSVOL directory does not exist: {}"
+msgstr "Каталог SYSVOL не существует: {}"
+
+#: checks.py:222
+msgid "Error checking SYSVOL directory: {}"
+msgstr "Ошибка проверки каталога SYSVOL: {}"
+
+#: checks.py:231
+msgid "Checking if SYSVOL share exists"
+msgstr "Проверка, существует ли общий ресурс SYSVOL"
+
+#: checks.py:236
+msgid "Error listing Samba shares: {}"
+msgstr "Ошибка при перечислении общих ресурсов Samba: {}"
+
+#: checks.py:241
+msgid "SYSVOL share exists"
+msgstr "Общий ресурс SYSVOL существует"
+
+#: checks.py:243
+msgid "SYSVOL share does not exist"
+msgstr "Общий ресурс SYSVOL не существует"
+
+#: checks.py:248
+msgid "Error checking SYSVOL share: {}"
+msgstr "Ошибка проверки общего ресурса SYSVOL: {}"
+
+#: actions.py:61
+msgid "LDIF file not found: {}"
+msgstr "Файл LDIF не найден: {}"
+
+#: actions.py:64
+msgid "Adding LDIF schema from file: {}"
+msgstr "Добавление схемы LDIF из файла: {}"
+
+#: actions.py:69
+msgid "Successfully added schema from {}"
+msgstr "Успешно добавлена схема из {}"
+
+#: actions.py:72
+msgid "Unknown error"
+msgstr "Неизвестная ошибка"
+
+#: actions.py:73
+msgid "Failed to add schema from {}: {}"
+msgstr "Не удалось добавить схему из {}: {}"
+
+#: actions.py:77
+msgid "Error adding LDIF schema: {}"
+msgstr "Ошибка добавления схемы LDIF: {}"
+
+#: actions.py:87
+msgid "Installing AD Trust support"
+msgstr "Установка поддержки доверия AD"
+
+#: actions.py:89
+msgid "ipa-adtrust-install not found"
+msgstr "ipa-adtrust-install не найден"
+
+#: actions.py:97
+msgid "Failed to install AD Trust: {}"
+msgstr "Не удалось установить доверие AD: {}"
+
+#: actions.py:99
+msgid "AD Trust installed successfully"
+msgstr "Доверие AD успешно установлено"
+
+#: actions.py:102
+msgid "Error installing AD Trust: {}"
+msgstr "Ошибка установки доверия AD: {}"
+
+#: actions.py:122
+msgid "Using standard permissions for SYSVOL directories"
+msgstr "Использование стандартных разрешений для каталогов SYSVOL"
+
+#: actions.py:125
+msgid "SYSVOL directory structure created successfully"
+msgstr "Структура каталога SYSVOL успешно создана"
+
+#: actions.py:129
+msgid "Error creating SYSVOL directory: {}"
+msgstr "Ошибка создания каталога SYSVOL: {}"
+
+#: actions.py:141
+msgid "Setting default ACLs on {}"
+msgstr "Установка ACL по умолчанию для {}"
+
+#: actions.py:146
+msgid "Failed to set ACLs on {}: {}"
+msgstr "Не удалось установить ACL для {}: {}"
+
+#: actions.py:149
+msgid "Successfully set default ACLs on {}"
+msgstr "Успешно установлены ACL по умолчанию для {}"
+
+#: actions.py:162
+msgid "Creating SYSVOL share for: {}"
+msgstr "Создание общего ресурса SYSVOL для: {}"
+
+#: actions.py:165
+msgid "Cannot create share: directory {} does not exist"
+msgstr "Невозможно создать общий ресурс: каталог {} не существует"
+
+#: actions.py:173
+msgid "Failed to create SYSVOL share: {}"
+msgstr "Не удалось создать общий ресурс SYSVOL: {}"
+
+#: actions.py:176
+msgid "SYSVOL share created successfully"
+msgstr "Общий ресурс SYSVOL успешно создан"
+
+#: actions.py:179
+msgid "Error creating SYSVOL share: {}"
+msgstr "Ошибка создания общего ресурса SYSVOL: {}"
