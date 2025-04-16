@@ -145,8 +145,6 @@ class IPAChecker:
         """
         try:
             conn = self.api.Backend.ldap2.conn
-
-            self.logger.debug(_("Retrieving LDAP schema"))
             try:
                 schema_entry = conn.search_s('cn=schema', ldap.SCOPE_BASE,
                     attrlist=['attributetypes', 'objectclasses'])[0]
@@ -177,8 +175,6 @@ class IPAChecker:
             True if AD Trust is enabled, False otherwise
         """
         try:
-            self.logger.debug(_("Checking if AD Trust is enabled"))
-
             if not hasattr(self.api.Command, 'adtrust_is_enabled'):
                 self.logger.error(_("AD Trust command not available"))
                 return False
@@ -204,7 +200,6 @@ class IPAChecker:
         """
         try:
             sysvol_path = f"/var/lib/freeipa/sysvol/{self.api.env.domain}"
-            self.logger.debug(_("Checking SYSVOL directory: {}").format(sysvol_path))
 
             if os.path.exists(sysvol_path) and os.path.isdir(sysvol_path):
 
@@ -237,16 +232,13 @@ class IPAChecker:
         """
         try:
             self.logger.debug(_("Checking if SYSVOL share exists"))
-
             cmd = ["net", "conf", "list"]
             result = subprocess.run(cmd, capture_output=True, text=True)
-
             if result.returncode != 0:
                 self.logger.error(_("Error listing Samba shares: {}").format(result.stderr))
                 return False
 
             has_share = "sysvol" in result.stdout
-
             if has_share:
                 self.logger.info(_("SYSVOL share exists"))
             else:
