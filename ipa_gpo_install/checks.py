@@ -12,7 +12,7 @@ from ipalib import api
 from ipalib import krb_utils
 from ipapython import ipautil
 
-LOCALE_DIR = join(dirname(dirname(abspath(__file__))), 'locale')
+LOCALE_DIR = '/usr/share/locale'
 
 try:
     locale.setlocale(locale.LC_ALL, '')

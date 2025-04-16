@@ -16,10 +16,10 @@ from ipapython.ipa_log_manager import standard_logging_setup
 from ipaplatform.paths import paths
 from ipaserver.install.installutils import run_script
 
-from src.checks import IPAChecker
-from src.actions import IPAActions
+from ipa_gpo_install.checks import IPAChecker
+from ipa_gpo_install.actions import IPAActions
 
-LOCALE_DIR = join(dirname(dirname(abspath(__file__))), 'locale')
+LOCALE_DIR = '/usr/share/locale'
 
 try:
     locale.setlocale(locale.LC_ALL, '')
@@ -38,10 +38,7 @@ except Exception as e:
 
 
 LOG_FILE_PATH = '/var/log/freeipa/ipa-gpo-install.log'
-SCHEMA_LDIF_PATH = os.path.join(
-    os.path.dirname(os.path.dirname(os.path.abspath(__file__))),
-    'data', '74alt-group-policy.ldif'
-)
+SCHEMA_LDIF_PATH = '/usr/share/ipa-gpo-install/data/74alt-group-policy.ldif'
 REQUIRED_SCHEMA_CLASSES = ['altOrganizationalUnit', 'groupPolicyContainer']
 
 logger = logging.getLogger(os.path.basename(__file__))

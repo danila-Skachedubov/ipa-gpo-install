@@ -13,7 +13,8 @@ from ipapython import ipautil
 from ipaplatform.paths import paths
 
 
-LOCALE_DIR = join(dirname(dirname(abspath(__file__))), 'locale')
+LOCALE_DIR = '/usr/share/locale'
+
 try:
     locale.setlocale(locale.LC_ALL, '')
     current_locale, encoding = locale.getlocale()
