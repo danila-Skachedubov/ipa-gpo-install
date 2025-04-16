@@ -1,0 +1,20 @@
+
+_ipa_gpo_install()
+{
+    local cur prev words cword
+    _init_completion || return
+
+    local opts="--check-only --debuglevel"
+
+    if [[ "$prev" == "--debuglevel" ]]; then
+        COMPREPLY=( $(compgen -W "0 1 2" -- "$cur") )
+        return 0
+    fi
+
+    if [[ "$cur" == -* ]]; then
+        COMPREPLY=( $(compgen -W "$opts" -- "$cur") )
+        return 0
+    fi
+}
+
+complete -F _ipa_gpo_install ipa-gpo-install
