@@ -1,0 +1,81 @@
+.\" IPA-GPO-INSTALL - Подготовка FreeIPA для управления групповыми политиками
+.\"
+.\" Copyright (C) 2025 BaseALT Ltd.
+.\"
+.\" This program is free software: you can redistribute it and/or modify
+.\" it under the terms of the GNU General Public License as published by
+.\" the Free Software Foundation, either version 3 of the License, or
+.\" (at your option) any later version.
+.\"
+.\" This program is distributed in the hope that it will be useful,
+.\" but WITHOUT ANY WARRANTY; without even the implied warranty of
+.\" MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+.\" GNU General Public License for more details.
+.\"
+.\" You should have received a copy of the GNU General Public License
+.\" along with this program.  If not, see <http://www.gnu.org/licenses/>.
+.TH IPA-GPO-INSTALL 8
+.
+.SH НАЗВАНИЕ
+ipa-gpo-install \- Подготовка FreeIPA для управления групповыми политиками
+.
+.SH СИНТАКСИС
+\fBipa-gpo-install\fP [ --check-only ] [ --debuglevel \fIУРОВЕНЬ\fP ]
+.
+.SH ОПИСАНИЕ
+.B ipa-gpo-install
+Подготавливает сервер FreeIPA для управления групповыми политиками путем расширения
+схемы LDAP классами объектов, связанными с групповыми политиками, и созданием
+необходимой структуры каталогов.
+
+Утилита выполняет несколько проверок и необходимых действий:
+.IP \(bu 4
+Расширяет схему LDAP FreeIPA классами объектов для групповых политик
+.IP \(bu 4
+Устанавливает поддержку доверия AD, если она ещё не установлена
+.IP \(bu 4
+Создаёт структуру каталогов SYSVOL
+.IP \(bu 4
+Настраивает общий ресурс Samba SYSVOL
+.
+.SH ОПЦИИ
+.TP
+\fB--check-only\fP
+Только выполнить проверки без внесения изменений.
+.TP
+\fB--debuglevel \fIУРОВЕНЬ\fR
+Установить уровень отладки: 0=ошибки, 1=предупреждения, 2=отладка. По умолчанию 0.
+.
+.SH "КОДЫ ВОЗВРАТА"
+.TP
+\fB0\fR
+Приложение успешно завершило работу.
+.TP
+\fB1\fR
+Произошла ошибка во время работы.
+.
+.SH ФАЙЛЫ
+.TP
+\fB/var/log/freeipa/ipa-gpo-install.log\fR
+Файл журнала ipa-gpo-install.
+.TP
+\fB/var/lib/freeipa/sysvol\fR
+Каталог SYSVOL для хранения групповых политик.
+.TP
+\fB/etc/samba/smb.conf\fR
+Файл конфигурации Samba.
+.
+.SH ТРЕБОВАНИЯ
+Эта утилита требует правильно установленного и настроенного сервера FreeIPA. Она должна быть
+запущена с правами root на сервере FreeIPA и требует действительного билета Kerberos для пользователя,
+который является администратором домена или входит в группу 'admins'.
+.
+.SH "СМОТРИТЕ ТАКЖЕ"
+ipa-adtrust-install(1), ipa(1), kinit(1)
+.
+.SH ОШИБКИ
+Пожалуйста, сообщайте о любых ошибках в систему отслеживания ошибок ALT Linux Bugzilla по адресу
+https://bugzilla.altlinux.org/ для данного пакета.
+.
+.SH АВТОР
+skachedubov@altlinux.org
