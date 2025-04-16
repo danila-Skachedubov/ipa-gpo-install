@@ -6,12 +6,13 @@ Summary:        Prepare FreeIPA for Group Policy Management
 License:        GPLv3+
 Group:          System/Configuration/Other
 Url:            https://github.com/danila-Skachedubov/ipa-gpo-install
-BuildArch: noarch
+ExcludeArch: %ix86
 
 BuildRequires: rpm-build-python3
 BuildRequires: gettext-tools
 
-Requires: freeipa-server
+Requires: python3-module-freeipa
+Requires: python3-module-ipaserver
 Requires: freeipa-server-trust-ad
 Source0: %name-%version.tar
 
