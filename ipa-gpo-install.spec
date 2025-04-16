@@ -56,4 +56,4 @@ install -m 644 completions/ipa-gpo-install %buildroot%_datadir/bash-completion/c
 
 %changelog
 * Wed Apr 16 2025 Danila Skachedubov <skachedubov@altlinux.org> 0.0.1-alt1
-- Initial package
+- Initial build
