@@ -24,18 +24,18 @@ ipa-gpo-install \- Prepare FreeIPA for Group Policy Management
 .
 .SH DESCRIPTION
 .B ipa-gpo-install
-Prepares a FreeIPA server for Group Policy Management by extending the LDAP schema
-with Group Policy related object classes and creating the necessary directory structure.
+ Prepares a FreeIPA server for group policy management by extending the LDAP schema with group policy-related
+ object classes and creating the necessary directory structure.
 
 The utility performs several checks and necessary actions:
 .IP \(bu 4
-Extends the IPA LDAP schema with Group Policy related object classes
+Extends the FreeIPA LDAP schema with group policy object classes
 .IP \(bu 4
-Installs AD Trust support if not already installed
+Installs AD trust support if it is not already installed
 .IP \(bu 4
 Creates the SYSVOL directory structure
 .IP \(bu 4
-Sets up the SYSVOL Samba share
+Configures the Samba SYSVOL share
 .
 .SH OPTIONS
 .TP
@@ -48,32 +48,31 @@ Set the debug level: 0=errors, 1=warnings, 2=debug. Default is 0.
 .SH "EXIT CODES"
 .TP
 \fB0\fR
-Application exited successfully.
+The application successfully completed.
 .TP
 \fB1\fR
-An error occurred during operation.
+An error occurred during execution.
 .
 .SH FILES
 .TP
 \fB/var/log/freeipa/ipa-gpo-install.log\fR
-Log file for ipa-gpo-install.
+The ipa-gpo-install log file.
 .TP
 \fB/var/lib/freeipa/sysvol\fR
-SYSVOL directory for Group Policy storage.
+The SYSVOL directory for storing group policies.
 .TP
 \fB/etc/samba/smb.conf\fR
-Samba configuration file.
+The Samba configuration file.
 .
 .SH REQUIREMENTS
-This utility requires a properly installed and configured FreeIPA server. It must be run
-as root on the FreeIPA server and requires a valid Kerberos ticket for a user who is a domain
-administrator or a member of the 'admins' group.
+This utility requires a correctly installed and configured FreeIPA server. It must be run with root privileges on the FreeIPA
+ server and requires a valid Kerberos ticket for a user who is a domain administrator or a member of the 'admins' group.
 .
 .SH "SEE ALSO"
 ipa-adtrust-install(1), ipa(1), kinit(1)
 .
 .SH BUGS
-Please report any bugs to the ALT Linux Bugzilla at https://bugzilla.altlinux.org/ for this package.
+Please report any bugs to the ALT Linux Bugzilla bug tracking system at https://bugzilla.altlinux.org/ for this package.
 .
 .SH AUTHOR
 skachedubov@altlinux.org
