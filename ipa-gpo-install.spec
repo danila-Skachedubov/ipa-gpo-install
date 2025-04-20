@@ -13,6 +13,7 @@ BuildRequires: gettext-tools
 
 Requires: freeipa-server
 Requires: freeipa-server-trust-ad
+Requires: samba-common-tools
 Source0: %name-%version.tar
 
 %description
