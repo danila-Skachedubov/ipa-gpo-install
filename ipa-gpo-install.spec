@@ -14,6 +14,7 @@ BuildRequires: gettext-tools
 Requires: python3-module-freeipa
 Requires: python3-module-ipaserver
 Requires: freeipa-server-trust-ad
+Requires: samba-common-tools
 Source0: %name-%version.tar
 
 %description
