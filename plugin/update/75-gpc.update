@@ -2,10 +2,8 @@
 dn: cn=System,$SUFFIX
 add: objectClass: top
 add: objectClass: nsContainer
-add: cn: System
 ###############################################################################
 dn: cn=Policies,cn=System,$SUFFIX
 add: objectClass: top
 add: objectClass: nsContainer
-add: cn: Policy
 ###############################################################################
