@@ -159,3 +159,35 @@ class grouppolicy_add(LDAPCreate):
         entry_attrs['versionnumber'] = 0
 
         return dn
+
+    def post_callback(self, ldap, dn, entry_attrs, *keys, **options):
+        guid = str(dn[0].value)
+        domain = api.env.domain.lower()
+
+        dbus.mainloop.glib.DBusGMainLoop(set_as_default=True)
+        params = [guid, domain]
+        while len(params) < 2:
+            params.append('')
+
+        try:
+            bus = dbus.SystemBus()
+            obj = bus.get_object('org.freeipa.server', '/',
+                                follow_name_owner_changes=True)
+            server = dbus.Interface(obj, 'org.freeipa.server')
+
+            ret, stdout, stderr = server.create_gpo_structure(*params)
+
+            if ret != 0:
+                logger.error("Failed to create GPO structure: %s", stderr)
+                raise errors.ExecutionError(
+                    message=_('Failed to create GPO structure: %(error)s')
+                            % {'error': stderr or _('Unknown error')}
+                )
+
+        except dbus.DBusException as e:
+            logger.error('Failed to call DBus: %s', str(e))
+            raise errors.ExecutionError(
+                message=_('Failed to communicate with DBus service')
+            )
+
+        return dn
