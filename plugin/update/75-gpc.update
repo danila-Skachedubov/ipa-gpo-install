@@ -1,0 +1,9 @@
+###############################################################################
+dn: cn=System,$SUFFIX
+add: objectClass: top
+add: objectClass: nsContainer
+###############################################################################
+dn: cn=Policies,cn=System,$SUFFIX
+add: objectClass: top
+add: objectClass: nsContainer
+###############################################################################

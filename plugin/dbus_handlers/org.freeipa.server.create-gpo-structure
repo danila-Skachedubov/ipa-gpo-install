@@ -1,0 +1,51 @@
+#!/usr/bin/python3
+
+import os
+import sys
+import subprocess
+
+def main():
+
+    if len(sys.argv) < 3:
+        print("Error: Insufficient arguments", file=sys.stderr)
+        return 1
+
+    guid = sys.argv[1]
+    domain = sys.argv[2]
+
+    policies_path = f"/var/lib/freeipa/sysvol/{domain}/Policies"
+    policy_path = os.path.join(policies_path, guid)
+
+    if not os.path.exists(policies_path):
+        try:
+            os.makedirs(policies_path, mode=0o755)
+            print(f"Created policies directory: {policies_path}")
+        except Exception as e:
+            print(f"Error creating policies directory: {e}", file=sys.stderr)
+            return 1
+
+    try:
+        os.makedirs(policy_path, mode=0o755, exist_ok=True)
+        machine_path = os.path.join(policy_path, "Machine")
+        user_path = os.path.join(policy_path, "User")
+
+        os.makedirs(machine_path, mode=0o755, exist_ok=True)
+        os.makedirs(user_path, mode=0o755, exist_ok=True)
+        gpt_ini_path = os.path.join(policy_path, "GPT.INI")
+        with open(gpt_ini_path, 'w') as f:
+            f.write("[General]\n")
+            f.write("Version=0\n")
+
+        print(f"Created GPT.INI file: {gpt_ini_path}")
+        subprocess.run(["chmod", "-R", "755", policy_path], check=True)
+
+
+        print("GPO structure creation completed successfully")
+        return 0
+
+    except Exception as e:
+        print(f"Error creating GPO structure: {e}", file=sys.stderr)
+        return 1
+
+if __name__ == "__main__":
+    sys.exit(main())
