@@ -223,3 +223,32 @@ class grouppolicy_find(LDAPSearch):
         '%(count)d Group Policy Object matched',
         '%(count)d Group Policy Objects matched', 0
     )
+
+
+@register()
+class grouppolicy_mod(LDAPUpdate):
+    """Modify a Group Policy Object."""
+    msg_summary = _('Modified Group Policy Object "%(value)s"')
+
+    def pre_callback(self, ldap, dn, entry_attrs, attrs_list, *keys, **options):
+        assert isinstance(dn, DN)
+
+        old_entry = self.obj.find_gpo_by_displayname(ldap, keys[0])
+        old_dn = old_entry.dn
+
+        if 'rename' in options and options['rename']:
+            new_name = options['rename']
+            if new_name == keys[0]:
+                raise errors.ValidationError(
+                    name='rename',
+                    error=_("New name must be different from the old one")
+                )
+            try:
+                self.obj.find_gpo_by_displayname(ldap, new_name)
+                raise errors.DuplicateEntry(
+                    message=_('A Group Policy Object with displayName "%s" already exists.') % new_name
+                )
+            except errors.NotFound:
+                pass
+
+        return old_dn
