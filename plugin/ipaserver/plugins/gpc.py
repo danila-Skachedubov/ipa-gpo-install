@@ -194,3 +194,32 @@ class grouppolicy_add(LDAPCreate):
             )
 
         return dn
+
+
+@register()
+class grouppolicy_del(LDAPDelete):
+    """Delete a Group Policy Object."""
+    msg_summary = _('Deleted Group Policy Object "%(value)s"')
+
+    def pre_callback(self, ldap, dn, *keys, **options):
+        entry = self.obj.find_gpo_by_displayname(ldap, keys[0])
+        return entry.dn
+
+
+@register()
+class grouppolicy_show(LDAPRetrieve):
+    """Display information about a Group Policy Object."""
+    msg_summary = _('Found Group Policy Object "%(value)s"')
+
+    def pre_callback(self, ldap, dn, attrs_list, *keys, **options):
+        entry = self.obj.find_gpo_by_displayname(ldap, keys[0])
+        return entry.dn
+
+
+@register()
+class grouppolicy_find(LDAPSearch):
+    """Search for Group Policy Objects."""
+    msg_summary = ngettext(
+        '%(count)d Group Policy Object matched',
+        '%(count)d Group Policy Objects matched', 0
+    )
