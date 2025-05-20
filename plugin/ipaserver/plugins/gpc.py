@@ -45,7 +45,7 @@ class grouppolicy(LDAPObject):
         'cn', 'displayName', 'flags', 'versionNumber',
     ]
     uuid_attribute = 'cn'
-    allow_rename = False
+    allow_rename = True
 
     managed_permissions = {
         'System: Read Group Policy Objects': {
@@ -97,30 +97,25 @@ class grouppolicy(LDAPObject):
         Str('cn?',
             label=_('Policy GUID'),
             doc=_('Group Policy Object GUID'),
-            flags=['no_create', 'no_update', 'no_search', 'no_option', 'no_output'],
         ),
         Str('distinguishedname?',
             label=_('Distinguished Name'),
             doc=_('Distinguished name of the group policy object'),
-            flags=['no_create', 'no_update', 'no_search', 'no_output'],
         ),
         Int('flags?',
             label=_('Flags'),
             doc=_('Group Policy Object flags'),
             default=0,
-            flags=['no_create', 'no_update'],
         ),
         Str('gpcfilesyspath?',
             label=_('File system path'),
             doc=_('Path to policy files on the file system'),
-            flags=['no_create', 'no_update'],
         ),
         Int('versionnumber?',
             label=_('Version number'),
             doc=_('Version number of the policy'),
             default=0,
             minvalue=0,
-            flags=['no_create', 'no_update'],
         ),
     )
 
@@ -128,6 +123,20 @@ class grouppolicy(LDAPObject):
         self.env._merge(**dict(PLUGIN_CONFIG))
         self.container_dn = self.env.container_grouppolicy
         super(grouppolicy, self)._on_finalize()
+
+    def find_gpo_by_displayname(self, ldap, displayname):
+        try:
+            entry = ldap.find_entry_by_attr(
+                'displayName',
+                displayname,
+                'groupPolicyContainer',
+                base_dn=DN(self.env.container_grouppolicy, self.env.basedn)
+            )
+            return entry
+        except errors.NotFound:
+            raise errors.NotFound(
+                reason=_('%(pkey)s: Group Policy Object not found') % {'pkey': displayname}
+            )
 
 
 @register()
@@ -138,12 +147,7 @@ class grouppolicy_add(LDAPCreate):
     def pre_callback(self, ldap, dn, entry_attrs, attrs_list, *keys, **options):
         displayname = keys[-1]
         try:
-            ldap.find_entry_by_attr(
-                'displayName',
-                displayname,
-                'groupPolicyContainer',
-                base_dn=DN(api.env.container_grouppolicy, api.env.basedn)
-            )
+            self.obj.find_gpo_by_displayname(ldap, displayname)
             raise errors.InvocationError(
                 message=_('A Group Policy Object with displayName "%s" already exists.') % displayname
             )
@@ -174,7 +178,6 @@ class grouppolicy_add(LDAPCreate):
             obj = bus.get_object('org.freeipa.server', '/',
                                 follow_name_owner_changes=True)
             server = dbus.Interface(obj, 'org.freeipa.server')
-
             ret, stdout, stderr = server.create_gpo_structure(*params)
 
             if ret != 0:
