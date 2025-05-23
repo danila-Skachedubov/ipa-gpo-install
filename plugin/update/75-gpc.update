@@ -1,0 +1,34 @@
+###############################################################################
+# Create system container
+###############################################################################
+dn: cn=System,$SUFFIX
+add: objectClass: top
+add: objectClass: nsContainer
+
+###############################################################################
+# Create policies container
+###############################################################################
+dn: cn=Policies,cn=System,$SUFFIX
+add: objectClass: top
+add: objectClass: nsContainer
+
+###############################################################################
+# Add the default privileges and roles for Group Policy management
+###############################################################################
+dn: cn=Group Policy Administrators,cn=roles,cn=accounts,$SUFFIX
+default: objectClass: groupofnames
+default: objectClass: nestedgroup
+default: objectClass: top
+default: cn: Group Policy Administrators
+default: description: Responsible for managing Group Policy Objects
+
+###############################################################################
+# Create privilege and associate with role
+###############################################################################
+dn: cn=Group Policy Administrators,cn=privileges,cn=pbac,$SUFFIX
+default: objectClass: top
+default: objectClass: groupofnames
+default: objectClass: nestedgroup
+default: cn: Group Policy Administrators
+default: description: Group Policy Administrators
+default: member: cn=Group Policy Administrators,cn=roles,cn=accounts,$SUFFIX
