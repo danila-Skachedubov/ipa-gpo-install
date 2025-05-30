@@ -256,3 +256,30 @@ class chain(LDAPObject):
         except Exception as e:
             logger.error("Failed to add chain '%s' to GPMaster: %s",
                         chain_dn, str(e))
+
+
+@register()
+class chain_add(LDAPCreate):
+    __doc__ = _('Create a new Group Policy Chain.')
+    msg_summary = _('Added Group Policy Chain "%(value)s"')
+
+    def pre_callback(self, ldap, dn, entry_attrs, attrs_list, *keys, **options):
+        """Convert names to DNs with strict validation."""
+        converted = self.obj.convert_names_to_dns(options, strict=True)
+        entry_attrs.update(converted)
+        return dn
+
+    def post_callback(self, ldap, dn, entry_attrs, *keys, **options):
+        """Add chain to GPMaster after successful creation."""
+        self.obj.add_chain_to_gpmaster(dn)
+        return dn
+
+
+def _normalize_to_list(value):
+    """Normalize value to list."""
+    if isinstance(value, str):
+        return [value]
+    elif isinstance(value, tuple):
+        return list(value)
+    else:
+        return list(value)
