@@ -365,3 +365,180 @@ class chain_mod(LDAPUpdate):
             }
 
         return super(chain_mod, self).execute(*keys, **options)
+
+    def _do_move_operation(self, ldap, dn, keys, options):
+        """Simple move operation - just the essentials."""
+
+        entry = ldap.get_entry(dn, attrs_list=['gplink'])
+        current_gplinks = [str(gp_dn) for gp_dn in entry.get('gplink', [])]
+
+        if len(current_gplinks) < 2:
+            return
+
+        gp_names = options.get('moveup_gpc') or options.get('movedown_gpc')
+        direction = 'up' if 'moveup_gpc' in options else 'down'
+
+        if isinstance(gp_names, str):
+            gp_names = [gp_names]
+        elif isinstance(gp_names, tuple):
+            gp_names = list(gp_names)
+
+        for gp_name in gp_names:
+            gp_dn = None
+            for existing_dn in current_gplinks:
+                try:
+                    gp_entry = ldap.get_entry(DN(existing_dn), attrs_list=GP_LOOKUP_ATTRIBUTES)
+                    display_name = (
+                        gp_entry.get('displayName', [None])[0] or
+                        gp_entry.get('cn', [None])[0]
+                    )
+                    if display_name == gp_name:
+                        gp_dn = existing_dn
+                        break
+                except:
+                    continue
+            if not gp_dn:
+                continue
+
+            current_index = current_gplinks.index(gp_dn)
+            if direction == 'up' and current_index > 0:
+                new_index = current_index - 1
+            elif direction == 'down' and current_index < len(current_gplinks) - 1:
+                new_index = current_index + 1
+            else:
+                continue
+            gp_to_move = current_gplinks.pop(current_index)
+            current_gplinks.insert(new_index, gp_to_move)
+
+        entry['gplink'] = []
+        ldap.update_entry(entry)
+
+        entry = ldap.get_entry(dn)
+        entry['gplink'] = current_gplinks
+        ldap.update_entry(entry)
+
+    def pre_callback(self, ldap, dn, entry_attrs, attrs_list, *keys, **options):
+        """Standard operations only - move operations handled in execute."""
+
+        current_entry = ldap.get_entry(dn, attrs_list=['usergroup', 'computergroup', 'gplink'])
+
+        self._handle_add_operations(entry_attrs, options, keys)
+
+        self._handle_remove_operations(ldap, current_entry, entry_attrs, options)
+
+        self._handle_standard_modifications(entry_attrs, options)
+
+        return dn
+
+    def _handle_add_operations(self, entry_attrs, options, keys):
+        """Handle add operations."""
+
+        if 'add_usergroup' in options and options['add_usergroup']:
+            group_name = options['add_usergroup']
+            validated = self.obj.convert_names_to_dns({'usergroup': group_name}, strict=True)
+            entry_attrs['usergroup'] = validated['usergroup']
+
+        if 'add_computergroup' in options and options['add_computergroup']:
+            hostgroup_name = options['add_computergroup']
+            validated = self.obj.convert_names_to_dns({'computergroup': hostgroup_name}, strict=True)
+            entry_attrs['computergroup'] = validated['computergroup']
+
+        if 'add_gpc' in options and options['add_gpc']:
+            self._add_gp_links(entry_attrs, options, keys[0])
+
+    def _add_gp_links(self, entry_attrs, options, chain_name):
+        """Add GP links to chain."""
+        gp_names = _normalize_to_list(options['add_gpc'])
+        ldap = self.api.Backend.ldap2
+        chain_dn = self.obj.get_dn(chain_name)
+        current_entry = ldap.get_entry(chain_dn, attrs_list=['gplink'])
+        current_gplinks = [str(dn) for dn in current_entry.get('gplink', [])]
+
+        for gp_name in gp_names:
+            try:
+                gp_dn = str(self.obj.find_gp_by_displayname(gp_name))
+                if gp_dn not in current_gplinks:
+                    current_gplinks.append(gp_dn)
+                    logger.debug("Added GP '%s' to chain", gp_name)
+                else:
+                    logger.warning("GP '%s' already exists in chain", gp_name)
+
+            except errors.NotFound:
+                raise errors.NotFound(
+                    reason=_("Group Policy '{}' not found").format(gp_name)
+                )
+
+        if current_gplinks:
+            entry_attrs['gplink'] = current_gplinks
+
+    def _handle_remove_operations(self, ldap, current_entry, entry_attrs, options):
+        """Handle remove operations."""
+
+        if 'remove_usergroup' in options and options['remove_usergroup']:
+            if not current_entry.get('usergroup'):
+                raise errors.ValidationError(
+                    name='remove_user_group',
+                    error=_("No user group assigned to this chain")
+                )
+            entry_attrs['usergroup'] = None
+
+        if 'remove_computergroup' in options and options['remove_computergroup']:
+            if not current_entry.get('computergroup'):
+                raise errors.ValidationError(
+                    name='remove_computer_group',
+                    error=_("No computer group assigned to this chain")
+                )
+            entry_attrs['computergroup'] = None
+
+        if 'remove_gpc' in options and options['remove_gpc']:
+            self._remove_gp_links(ldap, current_entry, entry_attrs, options)
+
+    def _remove_gp_links(self, ldap, current_entry, entry_attrs, options):
+        """Remove GP links from chain."""
+        gp_names = _normalize_to_list(options['remove_gpc'])
+        current_gplinks = [str(dn) for dn in current_entry.get('gplink', [])]
+
+        if not current_gplinks:
+            raise errors.ValidationError(
+                name='remove_gpc',
+                error=_("No Group Policies assigned to this chain")
+            )
+
+        for gp_name in gp_names:
+            removed = False
+            try:
+                gp_dn = str(self.obj.find_gp_by_displayname(gp_name))
+                if gp_dn in current_gplinks:
+                    current_gplinks.remove(gp_dn)
+                    removed = True
+                    logger.debug("Removed GP '%s' from chain", gp_name)
+
+            except errors.NotFound:
+                for existing_dn in current_gplinks[:]:
+                    try:
+                        gp_entry = ldap.get_entry(DN(existing_dn), attrs_list=GP_LOOKUP_ATTRIBUTES)
+                        existing_name = (
+                            gp_entry.get('displayName', [None])[0] or
+                            gp_entry.get('cn', [None])[0]
+                        )
+                        if existing_name == gp_name:
+                            current_gplinks.remove(existing_dn)
+                            removed = True
+                            break
+                    except errors.NotFound:
+                        continue
+            if not removed:
+                raise errors.NotFound(
+                    reason=_("Group Policy '{}' not found in chain").format(gp_name)
+                )
+
+        entry_attrs['gplink'] = current_gplinks if current_gplinks else None
+
+    def _handle_standard_modifications(self, entry_attrs, options):
+        """Handle standard modification operations."""
+        standard_options = {k: v for k, v in options.items()
+                           if k in ['usergroup', 'computergroup', 'gplink'] and v}
+
+        if standard_options:
+            converted = self.obj.convert_names_to_dns(standard_options, strict=True)
+            entry_attrs.update(converted)
