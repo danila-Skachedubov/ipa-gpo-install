@@ -542,3 +542,49 @@ class chain_mod(LDAPUpdate):
         if standard_options:
             converted = self.obj.convert_names_to_dns(standard_options, strict=True)
             entry_attrs.update(converted)
+
+
+@register()
+class chain_del(LDAPDelete):
+    __doc__ = _('Delete a Group Policy Chain.')
+    msg_summary = _('Deleted Group Policy Chain "%(value)s"')
+
+
+@register()
+class chain_show(LDAPRetrieve):
+    __doc__ = _('Display information about a Group Policy Chain.')
+
+    def post_callback(self, ldap, dn, entry_attrs, *keys, **options):
+        """Convert DNs to readable names unless raw mode is enabled."""
+        assert isinstance(dn, DN)
+
+        if not options.get('raw', False):
+            self.obj.convert_dns_to_names(ldap, entry_attrs)
+
+        return dn
+
+
+@register()
+class chain_find(LDAPSearch):
+    __doc__ = _('Search for Group Policy Chains.')
+
+    msg_summary = ngettext(
+        '%(count)d Group Policy Chain matched',
+        '%(count)d Group Policy Chains matched', 0
+    )
+
+    def args_options_2_entry(self, *args, **options):
+        """Convert search options to LDAP entry attributes for filtering."""
+        converted = self.obj.convert_names_to_dns(options, strict=False)
+        options.update(converted)
+
+        return super(chain_find, self).args_options_2_entry(*args, **options)
+
+    def post_callback(self, ldap, entries, truncated, *args, **options):
+        """Convert DNs to readable names for all found entries unless raw mode."""
+
+        if not options.get('raw', False):
+            for entry_attrs in entries:
+                self.obj.convert_dns_to_names(ldap, entry_attrs)
+
+        return truncated
