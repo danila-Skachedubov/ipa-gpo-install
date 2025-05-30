@@ -111,3 +111,148 @@ class chain(LDAPObject):
         self.env._merge(**dict(PLUGIN_CONFIG))
         self.container_dn = self.env.container_grouppolicychain
         super(chain, self)._on_finalize()
+
+    def find_gp_by_displayname(self, displayname):
+        """Find Group Policy Container by displayName."""
+        try:
+            ldap = self.api.Backend.ldap2
+            entry = ldap.find_entry_by_attr(
+                'displayName',
+                displayname,
+                'groupPolicyContainer',
+                base_dn=DN('cn=Policies,cn=System', api.env.basedn)
+            )
+            return entry.dn
+        except errors.NotFound:
+            raise errors.NotFound(
+                reason=_("Group Policy '{}' not found").format(displayname)
+            )
+
+    def resolve_object_name(self, attr_name, name, strict=False):
+        """Universal resolver for names to DN."""
+        if name.startswith(('cn=', 'CN=')):
+            return name
+        try:
+            if attr_name in OBJECT_TYPE_MAPPING:
+                obj_type, name_attr = OBJECT_TYPE_MAPPING[attr_name]
+                group_dn = self.api.Object[obj_type].get_dn(name)
+                if strict:
+                    ldap = self.api.Backend.ldap2
+                    ldap.get_entry(group_dn, attrs_list=[name_attr])
+                logger.debug("Resolved %s '%s' to DN", obj_type, name)
+                return str(group_dn)
+            elif attr_name == 'gplink':
+                return str(self.find_gp_by_displayname(name))
+            else:
+                return name
+
+        except errors.NotFound:
+            if strict:
+                obj_name = OBJECT_TYPE_MAPPING.get(attr_name, [attr_name])[0]
+                raise errors.NotFound(
+                    reason=_("{} '{}' not found").format(obj_name.title(), name)
+                )
+            logger.warning("Failed to resolve %s '%s': not found", attr_name, name)
+            return name
+        except Exception as e:
+            if strict:
+                obj_name = OBJECT_TYPE_MAPPING.get(attr_name, [attr_name])[0]
+                raise errors.ValidationError(
+                    name=attr_name,
+                    error=_("Failed to resolve {} '{}': {}").format(obj_name, name, str(e))
+                )
+            logger.warning("Failed to resolve %s '%s': %s", attr_name, name, e)
+            return name
+
+    def convert_names_to_dns(self, options, strict=False):
+        """Convert readable names to DNs for search/operations."""
+        converted = {}
+
+        for attr_name in OBJECT_TYPE_MAPPING:
+            if attr_name in options and options[attr_name]:
+                converted[attr_name] = self.resolve_object_name(
+                    attr_name, options[attr_name], strict
+                )
+        if 'gplink' in options and options['gplink']:
+            converted['gplink'] = self._convert_gp_names_to_dns(options['gplink'], strict)
+
+        return converted
+
+    def _convert_gp_names_to_dns(self, gp_names, strict=False):
+        """Convert GP displayNames to DNs."""
+        def resolve_gp(name):
+            name = str(name)
+            if name.startswith(('cn=', 'CN=')):
+                return name
+            try:
+                return str(self.find_gp_by_displayname(name))
+            except errors.NotFound:
+                if strict:
+                    raise
+                logger.warning("Group Policy '%s' not found", name)
+                return name
+
+        # Always return a list for LDAP compatibility
+        if isinstance(gp_names, str):
+            return [resolve_gp(gp_names)]
+        elif isinstance(gp_names, tuple):
+            return list(map(resolve_gp, gp_names))
+        else:
+            return list(map(resolve_gp, gp_names))
+
+    def convert_dns_to_names(self, ldap, entry_attrs):
+        """Convert DNs to readable names in entry attributes."""
+
+        for attr_name, (_, name_attr) in OBJECT_TYPE_MAPPING.items():
+            if attr_name in entry_attrs and entry_attrs[attr_name]:
+                dn_str = entry_attrs[attr_name][0]
+                try:
+                    dn_obj = DN(dn_str)
+                    entry = ldap.get_entry(dn_obj, attrs_list=[name_attr])
+                    entry_attrs[attr_name] = [entry[name_attr][0]]
+                except errors.NotFound:
+                    pass
+                except Exception as e:
+                    logger.warning("Error converting %s DN %s: %s", attr_name, dn_str, str(e))
+
+        if 'gplink' in entry_attrs and entry_attrs['gplink']:
+            gplink_display_names = []
+            for gp_dn in entry_attrs['gplink']:
+                try:
+                    gp_dn_obj = DN(gp_dn)
+                    gp_entry = ldap.get_entry(gp_dn_obj, attrs_list=GP_LOOKUP_ATTRIBUTES)
+
+                    display_name = (
+                        gp_entry.get('displayName', [None])[0] or
+                        gp_entry.get('cn', [None])[0] or
+                        gp_dn
+                    )
+                    gplink_display_names.append(display_name)
+
+                except errors.NotFound:
+                    gplink_display_names.append(gp_dn)
+                except Exception as e:
+                    logger.warning("Error processing gplink DN %s: %s", gp_dn, str(e))
+                    gplink_display_names.append(gp_dn)
+
+            entry_attrs['gplink'] = gplink_display_names
+
+    def add_chain_to_gpmaster(self, chain_dn):
+        """Add chain to GPMaster chain list."""
+        try:
+            ldap = self.api.Backend.ldap2
+            gpmaster_dn = DN(('cn', 'grouppolicymaster'),
+                           ('cn', 'etc'),
+                           self.api.env.basedn)
+            gpmaster_entry = ldap.get_entry(gpmaster_dn)
+            current_chain_list = list(gpmaster_entry.get('chainList', []))
+            chain_dn_str = str(chain_dn)
+
+            if chain_dn_str not in current_chain_list:
+                current_chain_list.append(chain_dn_str)
+                gpmaster_entry['chainList'] = current_chain_list
+                ldap.update_entry(gpmaster_entry)
+                logger.info("Successfully added chain '%s' to GPMaster", chain_dn_str)
+        except Exception as e:
+            logger.error("Failed to add chain '%s' to GPMaster: %s",
+                        chain_dn, str(e))
