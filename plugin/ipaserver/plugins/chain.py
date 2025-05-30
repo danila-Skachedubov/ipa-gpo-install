@@ -283,3 +283,85 @@ def _normalize_to_list(value):
         return list(value)
     else:
         return list(value)
+
+
+@register()
+class chain_mod(LDAPUpdate):
+    __doc__ = _('Modify a Group Policy Chain.')
+    msg_summary = _('Modified Group Policy Chain "%(value)s"')
+
+    takes_options = (
+        Str('add_usergroup?',
+            cli_name='add_user_group',
+            label=_('Add user group'),
+            doc=_('Add user group to chain'),
+        ),
+        Flag('remove_usergroup',
+            cli_name='remove_user_group',
+            label=_('Remove user group'),
+            doc=_('Remove user group from chain'),
+            default=False,
+        ),
+        Str('add_computergroup?',
+            cli_name='add_computer_group',
+            label=_('Add computer group'),
+            doc=_('Add computer group to chain'),
+        ),
+        Flag('remove_computergroup',
+            cli_name='remove_computer_group',
+            label=_('Remove computer group'),
+            doc=_('Remove computer group from chain'),
+            default=False,
+        ),
+        Str('add_gpc*',
+            cli_name='add_gpc',
+            label=_('Add GPCs'),
+            doc=_('Add GPCs to chain'),
+        ),
+        Str('remove_gpc*',
+            cli_name='remove_gpc',
+            label=_('Remove GPCs'),
+            doc=_('Remove GPCs from chain'),
+        ),
+        Str('moveup_gpc*',
+            cli_name='moveup_gpc',
+            label=_('Move GPC up'),
+            doc=_('Move GPC higher in chain priority'),
+        ),
+        Str('movedown_gpc*',
+            cli_name='movedown_gpc',
+            label=_('Move GPC down'),
+            doc=_('Move GPC lower in chain priority'),
+        ),
+    )
+
+    def execute(self, *keys, **options):
+        """Handle move operations separately, everything else normally."""
+
+        if ('moveup_gpc' in options and options['moveup_gpc']) or \
+           ('movedown_gpc' in options and options['movedown_gpc']):
+
+            ldap = self.api.Backend.ldap2
+            dn = self.obj.get_dn(*keys)
+
+            self._do_move_operation(ldap, dn, keys, options)
+
+            entry_attrs = ldap.get_entry(dn, self.obj.default_attributes)
+            if not options.get('raw', False):
+                self.obj.convert_dns_to_names(ldap, entry_attrs)
+
+            result_dict = {}
+            for attr_name in entry_attrs:
+                attr_value = entry_attrs[attr_name]
+                if isinstance(attr_value, list) and len(attr_value) == 1 and attr_name not in ['gplink']:
+                    result_dict[attr_name] = attr_value[0]
+                else:
+                    result_dict[attr_name] = attr_value
+
+            return {
+                'result': result_dict,
+                'value': keys[0],
+                'summary': self.msg_summary % {'value': keys[0]}
+            }
+
+        return super(chain_mod, self).execute(*keys, **options)
