@@ -1,0 +1,36 @@
+#!/usr/bin/python3
+
+import os
+import sys
+import shutil
+
+def main():
+    if len(sys.argv) < 3:
+        print("Error: Insufficient arguments", file=sys.stderr)
+        return 1
+
+    guid = sys.argv[1]
+    domain = sys.argv[2]
+
+    if not guid.startswith('{') or not guid.endswith('}') or len(guid) != 38:
+        print("Error: Invalid GUID format", file=sys.stderr)
+        return 1
+
+    policies_path = f"/var/lib/freeipa/sysvol/{domain}/Policies"
+    policy_path = os.path.join(policies_path, guid)
+
+    if not os.path.exists(policy_path):
+        print(f"Warning: Policy directory does not exist: {policy_path}")
+        return 0
+
+    try:
+        shutil.rmtree(policy_path)
+        print(f"Successfully deleted GPO structure: {policy_path}")
+        return 0
+
+    except Exception as e:
+        print(f"Error deleting GPO structure: {e}", file=sys.stderr)
+        return 1
+
+if __name__ == "__main__":
+    sys.exit(main())
