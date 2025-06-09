@@ -3,6 +3,8 @@
 import os
 import sys
 import shutil
+from ipa_gpo_install.config import get_policies_path, get_policy_path
+
 
 def main():
     if len(sys.argv) < 3:
@@ -16,8 +18,8 @@ def main():
         print("Error: Invalid GUID format", file=sys.stderr)
         return 1
 
-    policies_path = f"/var/lib/freeipa/sysvol/{domain}/Policies"
-    policy_path = os.path.join(policies_path, guid)
+    policies_path = get_policies_path(domain)
+    policy_path = get_policy_path(domain, guid)
 
     if not os.path.exists(policy_path):
         print(f"Warning: Policy directory does not exist: {policy_path}")

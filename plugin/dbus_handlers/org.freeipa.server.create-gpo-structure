@@ -3,6 +3,8 @@
 import os
 import sys
 import subprocess
+from ipa_gpo_install.config import get_policies_path, get_policy_path, get_gpt_ini_path
+
 
 def main():
 
@@ -13,8 +15,8 @@ def main():
     guid = sys.argv[1]
     domain = sys.argv[2]
 
-    policies_path = f"/var/lib/freeipa/sysvol/{domain}/Policies"
-    policy_path = os.path.join(policies_path, guid)
+    policies_path = get_policies_path(domain)
+    policy_path = get_policy_path(domain, guid)
 
     if not os.path.exists(policies_path):
         try:
@@ -31,7 +33,7 @@ def main():
 
         os.makedirs(machine_path, mode=0o755, exist_ok=True)
         os.makedirs(user_path, mode=0o755, exist_ok=True)
-        gpt_ini_path = os.path.join(policy_path, "GPT.INI")
+        gpt_ini_path = get_gpt_ini_path(domain, guid)
         with open(gpt_ini_path, 'w') as f:
             f.write("[General]\n")
             f.write("Version=0\n")
