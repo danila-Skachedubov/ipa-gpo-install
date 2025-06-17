@@ -3,7 +3,16 @@
 import os
 import sys
 import shutil
+import re
 from ipa_gpo_install.config import get_policies_path, get_policy_path
+
+
+GUID_PATTERN = re.compile(r'^\{[0-9A-Fa-f]{8}-[0-9A-Fa-f]{4}-[0-9A-Fa-f]{4}-[0-9A-Fa-f]{4}-[0-9A-Fa-f]{12}\}$')
+
+
+def is_valid_guid(guid):
+    """Validate GUID format using regex"""
+    return bool(GUID_PATTERN.match(guid))
 
 
 def main():
@@ -14,7 +23,7 @@ def main():
     guid = sys.argv[1]
     domain = sys.argv[2]
 
-    if not guid.startswith('{') or not guid.endswith('}') or len(guid) != 38:
+    if not is_valid_guid(guid):
         print("Error: Invalid GUID format", file=sys.stderr)
         return 1
 

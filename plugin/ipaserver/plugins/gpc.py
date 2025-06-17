@@ -53,15 +53,12 @@ class grouppolicy(LDAPObject):
             'ipapermright': {'read', 'search', 'compare'},
             'ipapermdefaultattr': {
                 'cn', 'displayName', 'distinguishedName', 'flags',
-                'objectclass',
+                'objectclass', 'gPCFileSysPath', 'versionNumber',
             },
         },
         'System: Read Group Policy Objects Content': {
             'ipapermbindruletype': 'permission',
             'ipapermright': {'read'},
-            'ipapermdefaultattr': {
-                'gPCFileSysPath', 'versionNumber'
-            },
             'default_privileges': {'Group Policy Administrators'},
         },
         'System: Add Group Policy Objects': {
